@@ -219,9 +219,17 @@ class SqliteDict(DictClass):
         for value in self.conn.select(GET_VALUES):
             yield self.decode(value[0])
 
-    def iteritems(self):
-        GET_ITEMS = 'SELECT key, value FROM "%s" ORDER BY rowid' % self.tablename
+    def iteritems(self, limit: int = None):
+        if limit is None:
+            GET_ITEMS = 'SELECT key, value FROM "%s" ORDER BY rowid' % self.tablename
+        else:
+            GET_ITEMS = 'SELECT key, value FROM "%s" ORDER BY rowid limit %s' % (self.tablename, limit)
         for key, value in self.conn.select(GET_ITEMS):
+            yield key, self.decode(value)
+
+    def prefix_iteritems(self, prefix: str, limit: int = None):
+        GET_ITEMS = 'SELECT key, value FROM "%s" WHERE key LIKE ? ORDER BY rowid' % self.tablename
+        for key, value in self.conn.select(GET_ITEMS, (f"{prefix}%",)):
             yield key, self.decode(value)
 
     def keys(self):
